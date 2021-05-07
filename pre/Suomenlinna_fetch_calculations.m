@@ -25,4 +25,4 @@ legend({'raw lines','60 deg averages'});
 
 
 
-dlmwrite('Suomenlinna_fetch.txt',[[0:10:350]' X'],'delimiter',' ','precision','%0.2f');
+dlmwrite('../Suomenlinna_fetch.txt',[[0:10:350]' X'],'delimiter',' ','precision','%0.2f');
