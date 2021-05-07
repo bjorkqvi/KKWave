@@ -1,5 +1,5 @@
 function [Site]=tstep2(Info,Site,Bnd,Nesting,dt,i,g,init)
-%function [running,Site,Bnd]=tstep2(Site,Bnd,running,Info,dt,i,g,init)
+%function [Site]=tstep2(Info,Site,Bnd,Nesting,dt,i,g,init)
 
 
 %  Ennustusohjelman aika-askel versio 2: 360 ei sis�lly 1 alueeseen
