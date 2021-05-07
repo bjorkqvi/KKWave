@@ -1,5 +1,5 @@
 function [Info,Site,Forcing,Bnd,Bnd_Forcing,Nesting] = KKWave_User_GoF2016
-% function [Forcing] = KKWave_User_GoF
+% function [Info,Site,Forcing,Bnd,Bnd_Forcing,Nesting] = KKWave_User_GoF2016
 
 %% General info about the run
 Info.folder=pwd; % Project folder

@@ -1,5 +1,5 @@
 function [Info,Site,Forcing,Bnd,Bnd_Forcing,Nesting] = KKWave_User_Suomenlinna2016_nobnd
-% function [Forcing] = KKWave_User_GoF
+% function [Info,Site,Forcing,Bnd,Bnd_Forcing,Nesting] = KKWave_User_Suomenlinna2016_nobnd
 
 %% General info about the run
 Info.folder=pwd; % Project folder
@@ -72,11 +72,9 @@ else
 end
 
 %% Nesting options
-% Suomenlinna
+% Dummy values for Suomenlinna
 Nesting(1).valid_dir=[0 360];
-a=load(sprintf('%s/attenuations/Suomenlinna_energy_attenuations.txt',Info.folder));
-Nesting(1).att=a(:,2);
-
+Nesting(1).att=ones(36,1);
 Nesting(1).BoundaryDelay=0; % Multiples of dt it takes for the boundary waves to arrive
 
 

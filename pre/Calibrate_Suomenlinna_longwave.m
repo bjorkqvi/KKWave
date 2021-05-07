@@ -4,14 +4,15 @@ clear
 
 addpath('../model_files/functions');
 %% Observations
-buoy.time=roundto30min(u2dt(ncread('Suomenlinna2016.nc','UNIXtime')));
-buoy.hs=ncread('Suomenlinna2016.nc','Hs');
+buoy.time=roundto30min(datetime(ncread('Suomenlinna2016_Hs.nc','UNIXtime'),'convertfrom','posixtime'));
+buoy.hs=ncread('Suomenlinna2016_Hs.nc','Hs');
 buoy.E=(buoy.hs/4).^2;
 
 load('../wave_output/KKW_Suomenlinna2016_nobnd.mat','Hs','Site');
 load('../bnd/BND_GoF2016.mat','Bnd');
 
 
+SupressFigures=1;
 
 Nesting(1).BoundaryDelay=0;
 %% Nest the boundary
@@ -45,10 +46,6 @@ end
 k=1;
 
  Dir='Ud'; % Use wind direction to determine the attenuation
-%Dir='Dw'; % Use wave ditrection to determine the attenuation
-
-
-
 
 
 r=Site.cumchecksum & ~isnan(Bnd(k).E)  & ~isnan(Bnd(k).U) & ~isnan(Bnd(k).(Dir));
@@ -86,61 +83,71 @@ for D=D0:dD:(D1-1)
     r=long.(Dir)>=D & long.(Dir)<(D+dD);
     x=long.E(r);
     y=max(buoy.E(r)-local.E(r),0);
-    scatter(x,y,15);
-    title(sprintf('%.0f<=%s<%.0f',D,Dir,D+dD));
-    xlim([0 0.7]);
-    ylim([0 0.2]);
-    k=linfitef(x,y);
-    hold on
-    t=[0:0.1:0.7];
-    plot(t,t*k(1)+k(2),'k');
-    hold off
+    kk=x\y;
+    k(1)=kk;
+    k(2)=0;
+    %k=linfitef(x,y);
     K2(pntr(D),1)=k(1);
     K2(pntr(D),2)=k(2);
     r=corrcoef(x,y);
     R(pntr(D))=r(1,2);
-    pause
     
+    if ~SupressFigures
+        scatter(x,y,15);
+        title(sprintf('%.0f<=%s<%.0f',D,Dir,D+dD));
+        xlim([0 0.7]);
+        ylim([0 0.2]);
+
+        hold on
+        t=[0:0.1:0.7];
+        plot(t,t*k(1)+k(2),'k');
+        hold off
+        pause
+    end
     
 end
+
+% Wind vector
+windD=D0:dD:(D1-1);
+
+%% Write output
+Fn=sprintf('../attenuations/KKW_att_Suomenlinna_%s.mat',Dir);
+save(Fn,'K2','windD','R');
+
+fprintf('Attenuations written to %s\n',Fn)
+
+Fn=sprintf('../attenuations/Suomenlinna_energy_attenuations_%s.txt',Dir);
+dlmwrite(Fn,[windD' K2(:,1)],'delimiter',' ','precision','%.4f');
 
 
 % Validate
 for n=1:length(long.(Dir))
      KKW.E(n)=local.E(n)+K2(pntr(long.(Dir)(n)))*long.E(n);
 end
-figure
+
+if ~SupressFigures
+    figure
+
+    scatter(buoy.hs,4*sqrt(KKW.E),10,long.(Dir));colorbar;
+    ylim([0 1.5]);
+    hold on
+    plot([0 1.5],[0 1.5],'k');
+    xlabel('H_s Wave Buoy'); ylabel('H_s KKWave');
+
+    rmse=sqrt(mean((4*sqrt(KKW.E)-buoy.hs').^2));
+    bias=mean(4*sqrt(KKW.E)-buoy.hs');
+    title(sprintf('Bias %.2f m, RMSE %.2f m',bias, rmse));
 
 
-scatter(buoy.hs,4*sqrt(KKW.E),10,long.(Dir));colorbar;
-ylim([0 1.5]);
-hold on
-plot([0 1.5],[0 1.5],'k');
-xlabel('H_s Wave Buoy'); ylabel('H_s KKWave');
-
-rmse=sqrt(mean((4*sqrt(KKW.E)-buoy.hs').^2));
-bias=mean(4*sqrt(KKW.E)-buoy.hs');
-title(sprintf('Bias %.2f m, RMSE %.2f m',bias, rmse));
-windD=D0:dD:(D1-1);
-
-figure
-plot(windD,K2(:,1))
-hold on
-plot(windD,R,'r');
-xlabel(sprintf('%s (deg)',Dir));
-ylabel('Attenuation factor K^2 / Correclation');
-legend({'Energy attenuation (K^2)','Correlation'});
-title('GoF wave buoy vs. Suomenlinna long wave');
-
-Fn=sprintf('KKW_att_Suomenlinna_%s.mat',Dir);
-save(Fn,'K2','windD','R');
-
-Fn=sprintf('Suomenlinna_energy_attenuations_%s.txt',Dir);
-dlmwrite(Fn,[windD' K2(:,1)],'delimiter',' ','precision','%.4f');
+    figure
+    plot(windD,K2(:,1))
+    hold on
+    plot(windD,R,'r');
+    xlabel(sprintf('%s (deg)',Dir));
+    ylabel('Attenuation factor K^2 / Correclation');
+    legend({'Energy attenuation (K^2)','Correlation'});
+    title('GoF wave buoy vs. Suomenlinna long wave');
+end
 
 
-cal.hs=4*sqrt(KKW.E);
-cal.hs_local=sqrt(local.E);
-cal.hs_long=sqrt(long.E);
-Fn=sprintf('Suomenlinna_calibration_%s.mat',Dir);
-save(Fn,'cal');
+

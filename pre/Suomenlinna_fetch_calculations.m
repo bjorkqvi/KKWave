@@ -1,6 +1,6 @@
-%% Lasketaan Suomenlinnan pyyhkäisymatka
-% Laskettu kartasta pyyhkäisymatkat 10 asteen välein
-% Lopulliset pyyhkäisymatkat 60 asteen keskiarvoja
+%% Calculate the fetch at Suomenlinna
+% Fetch estimated from map at 10 degree intervals
+% Final fetch values 60 degree averages
 clear
 close all
 
@@ -8,7 +8,7 @@ close all
 Xraw=[3.5 3.2 2.5 2.5 3.0 2.5 2.1 2.6 7.5 7.5 7.5 8.3 6.5 4.7 5.0 4.0 3.5 3.0 3.5 4.0 6.5 6.0 6.0 5.5 1.0 1.0 1.0 1.0 1.0 1.5 4.5 5.0 5.5 5.5 4.5 4.0];
 Xraw=Xraw/3.8; % cm -> km
 
-Xloop=[Xraw(end-2:end) Xraw Xraw(1:3)];
+Xloop=[Xraw(end-2:end) Xraw Xraw(1:3)]; % Create a "circular" vector
 ct=1;
 for n=4:(length(Xraw)+3)
    X(ct)=mean([cos(30*pi/180)*Xloop(n-3) cos(20*pi/180)*Xloop(n-2) cos(10*pi/180)*Xloop(n-1) Xloop(n) cos(10*pi/180)*Xloop(n+1) cos(20*pi/180)* Xloop(n+2) cos(30*pi/180)*Xloop(n+3)]); 
@@ -23,6 +23,7 @@ xlabel('D');
 ylabel('X (km)');
 legend({'raw lines','60 deg averages'});
 
+Fn='../fetch/Suomenlinna_fetch.txt';
+dlmwrite(Fn,[[0:10:350]' X'],'delimiter',' ','precision','%0.2f');
 
-
-dlmwrite('../Suomenlinna_fetch.txt',[[0:10:350]' X'],'delimiter',' ','precision','%0.2f');
+fprintf('Fetch values written to file %s\n', Fn);
